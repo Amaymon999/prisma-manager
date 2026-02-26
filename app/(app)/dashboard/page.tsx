@@ -3,7 +3,9 @@ import { MotionPage } from "@/components/app/motion-page";
 import { KpiCard } from "@/components/app/kpi-card";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { LeadStage } from "@prisma/client";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
+import { SourceBarChart } from "@/components/app/source-bar-chart";
+
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const [lead7, lead30, activeProjects, overdueTasks, bySource] = await Promise.all([
@@ -41,16 +43,7 @@ export default async function DashboardPage() {
             <CardDescription>Distribuzione canali acquisizione</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[280px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data}>
-                  <XAxis dataKey="name" stroke="rgba(255,255,255,0.6)" />
-                  <YAxis stroke="rgba(255,255,255,0.6)" />
-                  <Tooltip contentStyle={{ background: "#0B0F1A", border: "1px solid rgba(255,255,255,0.12)" }} />
-                  <Bar dataKey="value" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <SourceBarChart data={data} />
           </CardContent>
         </Card>
       </div>
