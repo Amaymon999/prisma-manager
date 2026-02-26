@@ -1,10 +1,14 @@
-import { AppShell } from "@/components/app/app-shell";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import "@/styles/globals.css";
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const session = await getServerSession(authOptions);
-  if (!session) redirect("/login");
-  return <AppShell>{children}</AppShell>;
+export const metadata = {
+  title: "PRISMA Manager",
+  description: "CRM + Pipeline + AI Creative Studio"
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="it" className="dark">
+      <body>{children}</body>
+    </html>
+  );
 }
