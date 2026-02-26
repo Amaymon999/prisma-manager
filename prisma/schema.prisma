@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  SALES
+  OPS
+}
+
+enum LeadStage {
+  NEW
+  CONTACTED
+  QUALIFIED
+  APPOINTMENT
+  PROPOSAL
+  WON
+  LOST
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ProjectStatus {
+  KICKOFF
+  ACTIVE
+  PAUSED
+  CLOSED
+}
+
+enum CollaboratorStatus {
+  NEW
+  REVIEW
+  CONTACTED
+  TEST
+  ACTIVE
+  REJECTED
+}
+
+enum TaskStatus {
+  TODO
+  DOING
+  DONE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  role         Role     @default(SALES)
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  leadsAssigned Lead[]  @relation("AssignedLeads")
+  tasksAssigned Task[]  @relation("AssignedTasks")
+  aiProjects    AiProject[] @relation("AiCreatedBy")
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  sector    String
+  vat       String?
+  address   String?
+  contacts  Json?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leads     Lead[]
+  projects  Project[]
+  tasks     Task[]
+}
+
+model Lead {
+  id           String    @id @default(cuid())
+  name         String
+  phone        String?
+  email        String?
+  sector       String
+  source       String
+  stage        LeadStage @default(NEW)
+  priority     Priority  @default(MEDIUM)
+  score        Int       @default(0)
+  notes        String?
+  tags         String[]  @default([])
+  followUpAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  companyId    String?
+  company      Company?  @relation(fields: [companyId], references: [id])
+
+  assignedToId String?
+  assignedTo   User?     @relation("AssignedLeads", fields: [assignedToId], references: [id])
+
+  tasks        Task[]
+}
+
+model Project {
+  id            String        @id @default(cuid())
+  name          String
+  status        ProjectStatus @default(KICKOFF)
+  valueEstimate Int?
+  startAt       DateTime?
+  endAt         DateTime?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  companyId     String
+  company       Company       @relation(fields: [companyId], references: [id])
+
+  tasks         Task[]
+}
+
+model Collaborator {
+  id           String             @id @default(cuid())
+  name         String
+  role         String
+  location     String
+  rate         Int?
+  status       CollaboratorStatus @default(NEW)
+  availability String?
+  notes        String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus @default(TODO)
+  dueAt       DateTime?
+  priority    Priority   @default(MEDIUM)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  assignedToId String?
+  assignedTo   User?     @relation("AssignedTasks", fields: [assignedToId], references: [id])
+
+  leadId      String?
+  lead        Lead?      @relation(fields: [leadId], references: [id])
+
+  companyId   String?
+  company     Company?   @relation(fields: [companyId], references: [id])
+
+  projectId   String?
+  project     Project?   @relation(fields: [projectId], references: [id])
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  type       String
+  message    String
+  entityType String
+  entityId   String
+  createdAt  DateTime @default(now())
+  userId     String?
+}
+
+model BrandPreset {
+  id             String   @id @default(cuid())
+  name           String
+  paletteJson    Json
+  typographyJson Json
+  layoutJson     Json
+  logoUrl        String?
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  aiProjects     AiProject[]
+}
+
+model AiProject {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  platform      String
+  objective     String
+  tone          String
+  language      String
+  formats       String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  brandPresetId String?
+  brandPreset   BrandPreset? @relation(fields: [brandPresetId], references: [id])
+
+  createdById   String
+  createdBy     User @relation("AiCreatedBy", fields: [createdById], references: [id])
+
+  variants      AiVariant[]
+}
+
+model AiVariant {
+  id         String   @id @default(cuid())
+  aiProjectId String
+  aiProject  AiProject @relation(fields: [aiProjectId], references: [id])
+
+  type       String   // "image" | "copy"
+  format     String?
+  imageUrl   String?
+  copyJson   Json?
+  promptUsed String
+  meta       Json?
+  createdAt  DateTime @default(now())
+}
